@@ -1,0 +1,17 @@
+from collections.abc import Sequence
+from typing import Any
+class OrderedArrayInsert:
+    def __init__(self,iterable: Sequence[Any]):
+        self.iterable = list(iterable)
+        self.len = len(self.iterable)
+    def insert(self,element:Any) -> None:
+        insert_index: int = 0
+        for index,value in enumerate(self.iterable):
+            if element<value:
+                insert_index = index
+                break
+        self.iterable.append("")
+        for i in range(self.len,insert_index,-1):
+            self.iterable[i] = self.iterable[i-1]
+            self.iterable[i-1] = element
+        self.len += 1
