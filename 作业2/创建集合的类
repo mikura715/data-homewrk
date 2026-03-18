@@ -1,0 +1,24 @@
+class MySet:
+    def __init__(self, iterable=None):
+        self.data = set(iterable) if iterable else set()
+    def contains(self, value):
+        return value in self.data
+    def insert(self, value):
+        if not self.contains(value):
+            self.data.add(value)
+    def remove(self, value):
+        self.data.discard(value)
+    def __str__(self):
+        return str(self.data)
+s = MySet([1, 2, 3])
+print(s)
+s.insert(2)
+print(s)
+s.remove(2)
+print(s)
+print(s.contains(3))
+s.remove(5)
+print(s)
+f = MySet(["apple","banana","orange","strawberry","peach"])
+print(f)
+print(f.contains("cherry"))
