@@ -1,0 +1,44 @@
+class MultipleDict:
+    def __init__(self,size:int):
+        self.size: int = size
+        self.table: list[list[tuple[str,int]]]=[[] for _ in range(size)]
+    def put(self,key:str,value: int)->None:
+        multiple_result: int = hash(key) % self.size
+        bucket:list[tuple[str,int]] = self.table[multiple_result]
+        for index,(old_key,old_value) in enumerate(bucket):
+            if old_key == key:
+                bucket[index] = (key,value)
+                return
+        else:
+            bucket.append((key,value))
+    def get(self,key:str) -> int|None:
+        multiple_result: int = hash(key) % self.size
+        bucket:list[tuple[str,int]] = self.table[multiple_result]
+        for bucket_key,bucket_value in bucket:
+            if bucket_key == key:
+                return bucket_value
+        return None
+    def pop(self,key:str)->None:
+        multiple_result: int = hash(key) % self.size
+        bucket:list[tuple[str,int]] = self.table[multiple_result]
+        for index,(bucket_key,bucket_value) in enumerate(bucket):
+            if bucket_key == key:
+                bucket.pop(index)
+    def __str__(self):
+        return str(self.table)
+md1 = MultipleDict(5)
+md2 = MultipleDict(10)
+md1.put("apple", 10)
+md1.put("banana", 20)
+md1.put("orange", 30)
+md2.put("cat", 1)
+md2.put("dog", 2)
+md2.put("mouse", 3)
+print(md1.get("apple"))
+print(md1.get("banana"))
+print(md2.get("dog"))
+print(md2.get("lion"))
+md1.pop("banana")
+print(md1.get("banana"))
+print(md1)
+print(md2)
