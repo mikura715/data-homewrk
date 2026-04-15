@@ -1,0 +1,46 @@
+from collections.abc import Sequence
+
+class QuickSortThreeWay:
+
+    def __init__(self, arr: Sequence[int | float]):
+        self.arr: list[int | float] = list(arr)
+        self.length: int = len(arr)
+
+    def three_way_partition(self, left: int, right: int) -> tuple[int, int]:
+
+        pivot = self.arr[left]
+        lt = left
+        gt = right
+        i = left + 1
+
+        while i <= gt:
+            if self.arr[i] < pivot:
+                self.arr[i], self.arr[lt] = self.arr[lt], self.arr[i]
+                lt += 1
+                i += 1
+            elif self.arr[i] > pivot:
+                self.arr[i], self.arr[gt] = self.arr[gt], self.arr[i]
+                gt -= 1
+            else:
+                i += 1
+
+        return lt, gt
+
+    def sort(self, left: int | None = None, right: int | None = None) -> list[int | float]:
+        if left is None:
+            left = 0
+        if right is None:
+            right = self.length - 1
+
+        if left >= right:
+            return self.arr
+
+        lt, gt = self.three_way_partition(left, right)
+
+        self.sort(left, lt - 1)
+        self.sort(gt + 1, right)
+
+        return self.arr
+arr2 = [4, 2, 2, 5, 2, 3, 2, 4, 1]
+qs2 = QuickSortThreeWay(arr2)
+print(qs2.sort())
