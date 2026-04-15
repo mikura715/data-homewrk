@@ -1,0 +1,55 @@
+from collections.abc import Sequence
+import random
+class QuickSort:
+
+    def __init__(self, arr: Sequence[int | float]):
+
+        self.arr: list[int | float] = list(arr)
+        self.length: int = len(arr)
+
+    def partition(self, left_index: int, right_index: int) -> int:
+
+        random_pivot = random.randint(left_index, right_index)
+        self.arr[random_pivot], self.arr[right_index] = \
+            self.arr[right_index], self.arr[random_pivot]
+
+        pivot_index: int = right_index
+        pivot: int | float = self.arr[pivot_index]
+
+        right_pointer: int = right_index - 1
+        left_pointer: int = left_index
+
+        while True:
+            while left_pointer <= right_pointer and self.arr[left_pointer] < pivot:
+                left_pointer += 1
+
+            while left_pointer <= right_pointer and self.arr[right_pointer] > pivot:
+                right_pointer -= 1
+
+            if left_pointer >= right_pointer:
+                break
+
+            self.arr[left_pointer], self.arr[right_pointer] = (self.arr[right_pointer],self.arr[left_pointer])
+
+        self.arr[left_pointer], self.arr[pivot_index] = (self.arr[pivot_index],self.arr[left_pointer])
+
+        return left_pointer
+
+    def sort(self, left_index: int | None = None, right_index: int | None = None) -> list[int | float]:
+        if left_index is None:
+            left_index = 0
+        if right_index is None:
+            right_index = self.length - 1
+
+        if right_index - left_index <= 0:
+            return self.arr
+
+        pivot_position: int = self.partition(left_index, right_index)
+
+        self.sort(left_index, pivot_position - 1)
+        self.sort(pivot_position + 1, right_index)
+
+        return self.arr
+arr1 = [3, 1, 4, 1, 5, 9, 2, 6]
+qs1 = QuickSort(arr1)
+print(qs1.sort())
