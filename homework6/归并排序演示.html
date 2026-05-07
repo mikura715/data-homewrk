@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>排序算法可视化演示 - 归并排序</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/theme/white.css">
+    <style>
+        :root {
+            --card-width: 44px;
+            --card-gap: 8px;
+            --color-default: #3b82f6;
+            --color-compare: #f59e0b;
+            --color-swap: #ef4444;
+            --color-sorted: #22c55e;
+            --color-pivot: #8b5cf6;
+            --color-gold: #fbbf24;
+            --color-insert: #ec4899;
+            --color-merge-left: #06b6d4; /* 归并左区间 */
+            --color-merge-right: #8b5cf6; /* 归并右区间 */
+            --color-merge-merged: #10b981; /* 已归并 */
+        }
+
+        .reveal {
+            font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+        }
+
+        .reveal h1, .reveal h2, .reveal h3 {
+            font-weight: 600;
+            color: #1f2937;
+            text-transform: none;
+        }
+
+        .reveal h1 { font-size: 2.2em; }
+        .reveal h2 { font-size: 1.5em; margin-bottom: 0.5em; }
+
+        .reveal .slides section {
+            padding: 16px 20px;
+        }
+
+        /* Cover */
+        .cover-slide h1 {
+            font-size: 2.4em;
+            color: #111827;
+            margin-bottom: 0.3em;
+        }
+        .cover-slide p {
+            font-size: 1.05em;
+            color: #6b7280;
+        }
+
+        /* Controls */
+        .algo-controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .algo-controls input[type="text"] {
+            padding: 6px 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 13px;
+            width: 200px;
+            outline: none;
+        }
+
+        .algo-controls button {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            background: #2563eb;
+            color: #fff;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .algo-controls button:hover { background: #1d4ed8; }
+        .algo-controls button:active { transform: translateY(1px); }
+        .algo-controls button:disabled { background: #9ca3af; cursor: not-allowed; }
+
+        .algo-controls .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+        .algo-controls .btn-secondary:hover { background: #e5e7eb; }
+
+        /* Visualization container */
+        .viz-container {
+            position: relative;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            height: 300px;
+            margin: 0 auto 12px;
+            padding: 10px 10px 26px 10px;
+            background: #f9fafb;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            max-width: 900px;
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+
+        /* Card wrapper */
+        .card-wrapper {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            flex-shrink: 0;
+            width: var(--card-width);
+            margin-right: var(--card-gap);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 1;
+        }
+
+        .card {
+            width: var(--card-width);
+            border-radius: 6px;
+            background: linear-gradient(180deg, #60a5fa 0%, var(--color-default) 100%);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 700;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+            transition: background 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+            position: relative;
+        }
+
+        .card .val { font-size: 14px; line-height: 1; }
+
+        .card-index-overlay {
+            position: absolute;
+            bottom: 6px;
+            width: var(--card-width);
+            text-align: center;
+            font-size: 11px;
+            color: #9ca3af;
+            font-weight: 500;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        /* 归并排序专属样式 */
+        .section.merge-viz .viz-container { padding-top: 30px; }
+        
+        /* 归并区间框 */
+        .merge-viz .range-box-left {
+            position: absolute;
+            bottom: 30px;
+            height: calc(100% - 40px);
+            background: rgba(6, 182, 212, 0.15);
+            border: 1px dashed rgba(6, 182, 212, 0.4);
+            border-radius: 8px;
+            transition: left 0.4s ease, width 0.4s ease, opacity 0.3s ease;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .merge-viz .range-box-right {
+            position: absolute;
+            bottom: 30px;
+            height: calc(100% - 40px);
+            background: rgba(139, 92, 246, 0.15);
+            border: 1px dashed rgba(139, 92, 246, 0.4);
+            border-radius: 8px;
+            transition: left 0.4s ease, width 0.4s ease, opacity 0.3s ease;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* 归并元素状态 */
+        .merge-viz .card-wrapper.merge-left .card {
+            background: linear-gradient(180deg, #22d3ee 0%, var(--color-merge-left) 100%);
+            box-shadow: 0 0 18px rgba(6, 182, 212, 0.8);
+        }
+        .merge-viz .card-wrapper.merge-right .card {
+            background: linear-gradient(180deg, #a78bfa 0%, var(--color-merge-right) 100%);
+            box-shadow: 0 0 18px rgba(139, 92, 246, 0.8);
+        }
+        .merge-viz .card-wrapper.comparing .card {
+            transform: translateY(-10px) scale(1.1);
+            background: linear-gradient(180deg, #fbbf24 0%, var(--color-compare) 100%);
+        }
+        .merge-viz .card-wrapper.merged .card {
+            background: linear-gradient(180deg, #34d399 0%, var(--color-merge-merged) 100%);
+        }
+        .merge-viz .card-wrapper.sorted-merge .card {
+            background: linear-gradient(180deg, #4ade80 0%, var(--color-sorted) 100%);
+        }
+
+        /* 归并动画 */
+        .merge-viz .card-wrapper.anim-merge-in .card {
+            animation: merge-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        @keyframes merge-in {
+            0% { transform: scale(0.8) translateY(10px); opacity: 0.6; }
+            100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+
+        /* Info panel */
+        .info-panel {
+            max-width: 800px;
+            margin: 0 auto 10px;
+            padding: 10px 14px;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            text-align: center;
+            min-height: 40px;
+        }
+        .step-desc { font-size: 15px; color: #111827; margin-bottom: 3px; }
+        .step-counter { font-size: 12px; color: #6b7280; }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+        .legend-item { display: inline-flex; align-items: center; gap: 5px; }
+        .legend-dot { width: 11px; height: 11px; border-radius: 2px; }
+
+        /* Playback controls */
+        .playback {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 6px;
+        }
+        .playback button { padding: 8px 16px; border-radius: 8px; font-size: 13px; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            :root { --card-width: 32px; --card-gap: 4px; }
+            .viz-container { height: 220px; }
+            .reveal h2 { font-size: 1.2em; }
+            .algo-controls input[type="text"] { width: 150px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+            <!-- Cover -->
+            <section class="cover-slide">
+                <h1>排序算法可视化演示</h1>
+                <p>交互式逐步演示归并排序（分治思想）</p>
+                <p style="margin-top: 40px; font-size: 0.9em; color: #9ca3af;">按 → 键或点击右下角箭头开始</p>
+            </section>
+
+            <!-- Merge Sort -->
+            <section class="section merge-viz">
+                <h2>归并排序</h2>
+                <div class="algo-controls">
+                    <input type="text" class="array-input" placeholder="输入数字，如：8,4,5,7,1,3,6,2" value="8,4,5,7,1,3,6,2">
+                    <button class="btn-generate">生成数组</button>
+                    <button class="btn-reset btn-secondary">重置</button>
+                </div>
+                <div class="legend">
+                    <span class="legend-item"><span class="legend-dot" style="background:var(--color-default)"></span>默认</span>
+                    <span class="legend-item"><span class="legend-dot" style="background:var(--color-merge-left)"></span>左区间</span>
+                    <span class="legend-item"><span class="legend-dot" style="background:var(--color-merge-right)"></span>右区间</span>
+                    <span class="legend-item"><span class="legend-dot" style="background:var(--color-compare)"></span>比较</span>
+                    <span class="legend-item"><span class="legend-dot" style="background:var(--color-merge-merged)"></span>已归并</span>
+                    <span class="legend-item"><span class="legend-dot" style="background:var(--color-sorted)"></span>已排序</span>
+                </div>
+                <div class="viz-container" id="viz-merge">
+                    <div class="range-box-left" id="merge-range-left"></div>
+                    <div class="range-box-right" id="merge-range-right"></div>
+                </div>
+                <div class="info-panel">
+                    <div class="step-desc" id="desc-merge">请点击“生成数组”开始</div>
+                    <div class="step-counter" id="counter-merge">- / -</div>
+                </div>
+                <div class="playback">
+                    <button class="btn-prev">上一步</button>
+                    <button class="btn-play">自动播放</button>
+                    <button class="btn-next">下一步</button>
+                </div>
+            </section>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            slideNumber: 'c/t',
+            transition: 'slide',
+            width: 1100,
+            height: 720,
+            margin: 0.06
+        });
+
+        // ======================== 工具函数 ========================
+        function parseInput(str) {
+            return str.split(/[,，\s]+/)
+                .map(s => s.trim())
+                .filter(s => s !== '')
+                .map(Number)
+                .filter(n => !isNaN(n));
+        }
+
+        function clampArray(arr, maxLen = 20) {
+            return arr.slice(0, maxLen);
+        }
+
+        function deepCopy(arr) {
+            return arr.map(item => ({ ...item }));
+        }
+
+        function createSnapshot(array, description, focus = [], animation = '', extras = {}) {
+            return {
+                array: deepCopy(array),
+                desc: description,
+                focus,
+                animation,
+                extras
+            };
+        }
+
+        // ======================== 归并排序步骤生成（修复核心问题） ========================
+        function generateMergeSteps(arr) {
+            const steps = [];
+            const n = arr.length;
+            // 初始化数组快照（每个元素记录value和state）
+            const baseArray = arr.map((v, i) => ({ value: v, state: 'default', id: i }));
+            steps.push(createSnapshot(baseArray, `初始数组: [${arr.join(', ')}]`));
+            
+            if (n <= 1) {
+                const finalArr = deepCopy(baseArray);
+                finalArr.forEach(x => x.state = 'sorted-merge');
+                steps.push(createSnapshot(finalArr, `排序完成！`));
+                return steps;
+            }
+
+            // 归并排序核心（带步骤记录，修复值同步问题）
+            function mergeSort(arr, low, high, parentSteps, baseArr) {
+                if (low === high) {
+                    const snapArr = deepCopy(baseArr);
+                    snapArr[low].state = 'merged';
+                    parentSteps.push(createSnapshot(snapArr, 
+                        `单元素区间 [${low}] 天然有序`, 
+                        [low], '', { left: low, right: high }));
+                    return [arr[low]];
+                }
+
+                const mid = Math.floor((low + high) / 2);
+                // 记录拆分步骤
+                parentSteps.push(createSnapshot(deepCopy(baseArr), 
+                    `将区间 [${low}, ${high}] 拆分为左 [${low}, ${mid}] 和右 [${mid+1}, ${high}]`, 
+                    [], '', { left: low, mid: mid, right: high }));
+
+                // 递归拆分左区间
+                const leftArr = mergeSort(arr, low, mid, parentSteps, baseArr);
+                // 标记左区间状态
+                const leftSnap = deepCopy(baseArr);
+                for (let i = low; i <= mid; i++) leftSnap[i].state = 'merge-left';
+                parentSteps.push(createSnapshot(leftSnap, 
+                    `左区间 [${low}, ${mid}] 排序完成: [${leftArr.join(', ')}]`, 
+                    [...Array(mid - low + 1).keys()].map(i => i + low), '', { left: low, mid: mid }));
+
+                // 递归拆分右区间
+                const rightArr = mergeSort(arr, mid + 1, high, parentSteps, baseArr);
+                // 标记右区间状态
+                const rightSnap = deepCopy(baseArr);
+                for (let i = mid + 1; i <= high; i++) rightSnap[i].state = 'merge-right';
+                parentSteps.push(createSnapshot(rightSnap, 
+                    `右区间 [${mid+1}, ${high}] 排序完成: [${rightArr.join(', ')}]`, 
+                    [...Array(high - mid).keys()].map(i => i + mid + 1), '', { mid: mid, right: high }));
+
+                // 合并两个有序区间
+                parentSteps.push(createSnapshot(deepCopy(baseArr), 
+                    `开始合并左区间 [${low}, ${mid}] 和右区间 [${mid+1}, ${high}]`, 
+                    [...Array(high - low + 1).keys()].map(i => i + low), '', { left: low, mid: mid, right: high }));
+                
+                const merged = [];
+                let i = 0, j = 0;
+                // 复制一份当前baseArr作为合并的临时数组
+                let mergeTempArr = deepCopy(baseArr);
+                
+                // 标记当前合并的左右区间
+                for (let k = low; k <= mid; k++) mergeTempArr[k].state = 'merge-left';
+                for (let k = mid+1; k <= high; k++) mergeTempArr[k].state = 'merge-right';
+
+                // 核心合并逻辑（修复值更新问题）
+                while (i < leftArr.length && j < rightArr.length) {
+                    const focusLeft = low + i;
+                    const focusRight = mid + 1 + j;
+                    // 记录比较步骤
+                    const compareSnap = deepCopy(mergeTempArr);
+                    compareSnap[focusLeft].state = 'comparing';
+                    compareSnap[focusRight].state = 'comparing';
+                    parentSteps.push(createSnapshot(compareSnap, 
+                        `比较左区间的 ${leftArr[i]} 和右区间的 ${rightArr[j]}`, 
+                        [focusLeft, focusRight], 'compare', { left: low, mid: mid, right: high }));
+
+                    if (leftArr[i] <= rightArr[j]) {
+                        merged.push(leftArr[i]);
+                        // 关键修复：更新mergeTempArr对应位置的值（而不是baseArr）
+                        mergeTempArr[low + merged.length - 1].value = leftArr[i];
+                        mergeTempArr[low + merged.length - 1].state = 'merged';
+                        parentSteps.push(createSnapshot(deepCopy(mergeTempArr), 
+                            `选择左区间的 ${leftArr[i]} 放入合并结果`, 
+                            [low + merged.length - 1], 'merge-in', { left: low, mid: mid, right: high }));
+                        i++;
+                    } else {
+                        merged.push(rightArr[j]);
+                        mergeTempArr[low + merged.length - 1].value = rightArr[j];
+                        mergeTempArr[low + merged.length - 1].state = 'merged';
+                        parentSteps.push(createSnapshot(deepCopy(mergeTempArr), 
+                            `选择右区间的 ${rightArr[j]} 放入合并结果`, 
+                            [low + merged.length - 1], 'merge-in', { left: low, mid: mid, right: high }));
+                        j++;
+                    }
+                }
+
+                // 处理左区间剩余元素
+                while (i < leftArr.length) {
+                    merged.push(leftArr[i]);
+                    mergeTempArr[low + merged.length - 1].value = leftArr[i];
+                    mergeTempArr[low + merged.length - 1].state = 'merged';
+                    parentSteps.push(createSnapshot(deepCopy(mergeTempArr), 
+                        `左区间剩余元素 ${leftArr[i]} 放入合并结果`, 
+                        [low + merged.length - 1], 'merge-in', { left: low, mid: mid, right: high }));
+                    i++;
+                }
+
+                // 处理右区间剩余元素
+                while (j < rightArr.length) {
+                    merged.push(rightArr[j]);
+                    mergeTempArr[low + merged.length - 1].value = rightArr[j];
+                    mergeTempArr[low + merged.length - 1].state = 'merged';
+                    parentSteps.push(createSnapshot(deepCopy(mergeTempArr), 
+                        `右区间剩余元素 ${rightArr[j]} 放入合并结果`, 
+                        [low + merged.length - 1], 'merge-in', { left: low, mid: mid, right: high }));
+                    j++;
+                }
+
+                // 关键修复：将合并后的结果同步回baseArr（影响后续步骤）
+                for (let k = low; k <= high; k++) {
+                    baseArr[k].value = mergeTempArr[k].value;
+                    baseArr[k].state = 'merged';
+                }
+
+                // 记录合并完成步骤
+                parentSteps.push(createSnapshot(deepCopy(baseArr), 
+                    `区间 [${low}, ${high}] 合并完成: [${merged.join(', ')}]`, 
+                    [...Array(high - low + 1).keys()].map(i => i + low), '', { left: low, right: high }));
+                
+                return merged;
+            }
+
+            // 执行归并排序并生成步骤（传入baseArray用于值同步）
+            const sortedResult = mergeSort(arr, 0, n - 1, steps, baseArray);
+
+            // 最终排序完成（修复最终数组显示）
+            const finalSnap = deepCopy(baseArray);
+            finalSnap.forEach(x => x.state = 'sorted-merge');
+            steps.push(createSnapshot(finalSnap, 
+                `归并排序完成！最终数组: [${sortedResult.join(', ')}]`));
+            
+            return steps;
+        }
+
+        // ======================== 可视化渲染 ========================
+        class MergeViz {
+            constructor(containerId, descId, counterId) {
+                this.container = document.getElementById(containerId);
+                this.descEl = document.getElementById(descId);
+                this.counterEl = document.getElementById(counterId);
+                this.array = [];
+                this.steps = [];
+                this.currentStep = 0;
+                this.isPlaying = false;
+                this.playInterval = null;
+                this.cardWidth = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--card-width'));
+                this.cardGap = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--card-gap'));
+            }
+
+            // 初始化数组渲染
+            initArray(arr) {
+                this.container.innerHTML = '';
+                this.array = arr;
+                const maxVal = Math.max(...arr.map(item => item.value));
+                
+                arr.forEach((item, index) => {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'card-wrapper';
+                    wrapper.dataset.index = index;
+
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.style.height = `${(item.value / maxVal) * 250}px`;
+                    
+                    const valEl = document.createElement('div');
+                    valEl.className = 'val';
+                    valEl.textContent = item.value;
+                    card.appendChild(valEl);
+
+                    const indexOverlay = document.createElement('div');
+                    indexOverlay.className = 'card-index-overlay';
+                    indexOverlay.textContent = index;
+                    
+                    wrapper.appendChild(card);
+                    wrapper.appendChild(indexOverlay);
+                    this.container.appendChild(wrapper);
+                });
+
+                // 渲染区间框
+                this.updateRangeBoxes({});
+            }
+
+            // 更新区间框（左/右区间）
+            updateRangeBoxes(extras) {
+                const leftBox = document.getElementById('merge-range-left');
+                const rightBox = document.getElementById('merge-range-right');
+                leftBox.style.opacity = '0';
+                rightBox.style.opacity = '0';
+
+                if (!extras) return;
+
+                const { left, mid, right } = extras;
+                if (left !== undefined && mid !== undefined) {
+                    const startX = left * (this.cardWidth + this.cardGap);
+                    const width = (mid - left + 1) * (this.cardWidth + this.cardGap) - this.cardGap;
+                    leftBox.style.left = `${startX}px`;
+                    leftBox.style.width = `${width}px`;
+                    leftBox.style.opacity = '1';
+                }
+
+                if (mid !== undefined && right !== undefined && mid < right) {
+                    const startX = (mid + 1) * (this.cardWidth + this.cardGap);
+                    const width = (right - mid) * (this.cardWidth + this.cardGap) - this.cardGap;
+                    rightBox.style.left = `${startX}px`;
+                    rightBox.style.width = `${width}px`;
+                    rightBox.style.opacity = '1';
+                }
+            }
+
+            // 应用步骤状态
+            applyStep(step) {
+                // 更新描述和计数器
+                this.descEl.textContent = step.desc;
+                this.counterEl.textContent = `${this.currentStep} / ${this.steps.length - 1}`;
+
+                // 更新数组元素状态和值
+                const maxVal = Math.max(...step.array.map(item => item.value));
+                step.array.forEach((item, index) => {
+                    const wrapper = this.container.querySelector(`.card-wrapper[data-index="${index}"]`);
+                    if (!wrapper) return;
+
+                    // 重置所有状态
+                    wrapper.className = 'card-wrapper';
+                    const card = wrapper.querySelector('.card');
+                    
+                    // 更新值和高度（关键：每次都重新计算高度）
+                    card.querySelector('.val').textContent = item.value;
+                    card.style.height = `${(item.value / maxVal) * 250}px`;
+
+                    // 应用状态类
+                    if (item.state) wrapper.classList.add(item.state);
+                    
+                    // 应用焦点
+                    if (step.focus.includes(index)) wrapper.classList.add('focused');
+                    
+                    // 应用动画
+                    if (step.animation) wrapper.classList.add(`anim-${step.animation}`);
+                });
+
+                // 更新区间框
+                this.updateRangeBoxes(step.extras);
+            }
+
+            // 跳转到指定步骤
+            goToStep(stepIndex) {
+                if (stepIndex < 0 || stepIndex >= this.steps.length) return;
+                this.currentStep = stepIndex;
+                this.applyStep(this.steps[stepIndex]);
+            }
+
+            // 下一步
+            nextStep() {
+                if (this.currentStep < this.steps.length - 1) {
+                    this.goToStep(this.currentStep + 1);
+                } else {
+                    this.stopPlay();
+                }
+            }
+
+            // 上一步
+            prevStep() {
+                if (this.currentStep > 0) {
+                    this.goToStep(this.currentStep - 1);
+                }
+            }
+
+            // 自动播放
+            startPlay() {
+                if (this.isPlaying) return;
+                this.isPlaying = true;
+                this.playInterval = setInterval(() => {
+                    this.nextStep();
+                }, 1500);
+            }
+
+            // 停止播放
+            stopPlay() {
+                this.isPlaying = false;
+                clearInterval(this.playInterval);
+            }
+
+            // 重置
+            reset() {
+                this.stopPlay();
+                this.currentStep = 0;
+                if (this.steps.length > 0) {
+                    this.initArray(this.steps[0].array);
+                    this.applyStep(this.steps[0]);
+                }
+            }
+
+            // 初始化步骤
+            initSteps(arr) {
+                this.steps = generateMergeSteps(arr);
+                this.currentStep = 0;
+                this.initArray(this.steps[0].array);
+                this.applyStep(this.steps[0]);
+            }
+        }
+
+        // ======================== 初始化归并排序可视化 ========================
+        const mergeViz = new MergeViz('viz-merge', 'desc-merge', 'counter-merge');
+
+        // 绑定归并排序控件事件
+        const mergeControls = document.querySelector('.merge-viz .algo-controls');
+        const mergeInput = mergeControls.querySelector('.array-input');
+        const mergeGenerateBtn = mergeControls.querySelector('.btn-generate');
+        const mergeResetBtn = mergeControls.querySelector('.btn-reset');
+        const mergePlayback = document.querySelector('.merge-viz .playback');
+        const mergePrevBtn = mergePlayback.querySelector('.btn-prev');
+        const mergePlayBtn = mergePlayback.querySelector('.btn-play');
+        const mergeNextBtn = mergePlayback.querySelector('.btn-next');
+
+        // 生成数组
+        mergeGenerateBtn.addEventListener('click', () => {
+            const inputArr = parseInput(mergeInput.value);
+            const clampedArr = clampArray(inputArr);
+            if (clampedArr.length === 0) {
+                alert('请输入有效的数字数组（如 8,4,5,7,1）');
+                return;
+            }
+            mergeViz.initSteps(clampedArr);
+        });
+
+        // 重置
+        mergeResetBtn.addEventListener('click', () => {
+            mergeViz.reset();
+        });
+
+        // 上一步
+        mergePrevBtn.addEventListener('click', () => {
+            mergeViz.stopPlay();
+            mergeViz.prevStep();
+        });
+
+        // 下一步
+        mergeNextBtn.addEventListener('click', () => {
+            mergeViz.stopPlay();
+            mergeViz.nextStep();
+        });
+
+        // 播放/暂停
+        mergePlayBtn.addEventListener('click', () => {
+            if (mergeViz.isPlaying) {
+                mergeViz.stopPlay();
+                mergePlayBtn.textContent = '自动播放';
+            } else {
+                mergeViz.startPlay();
+                mergePlayBtn.textContent = '暂停';
+            }
+        });
+
+        // 播放状态同步
+        setInterval(() => {
+            if (mergeViz.isPlaying) {
+                mergePlayBtn.textContent = '暂停';
+            } else {
+                mergePlayBtn.textContent = '自动播放';
+            }
+        }, 100);
+
+        // 初始加载示例数组
+        window.addEventListener('load', () => {
+            const inputArr = parseInput(mergeInput.value);
+            const clampedArr = clampArray(inputArr);
+            mergeViz.initSteps(clampedArr);
+        });
+    </script>
+</body>
+</html>
