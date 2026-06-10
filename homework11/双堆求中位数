@@ -1,0 +1,31 @@
+import heapq
+
+class MedianFinder:
+    def __init__(self):
+        self.left = []
+        self.right = []
+    def addNum(self, num: int) -> None:
+        if not self.left or num <= -self.left[0]:
+            heapq.heappush(self.left, -num)
+        else:
+            heapq.heappush(self.right, num)
+        if len(self.left) > len(self.right) + 1:
+            val = -heapq.heappop(self.left)
+            heapq.heappush(self.right, val)
+        elif len(self.right) > len(self.left):
+            val = heapq.heappop(self.right)
+            heapq.heappush(self.left, -val)
+#堆的插入、弹出操作时间复杂度是O(log n)（n为当前总元素数），每次最多两次堆操作，单次添加复杂度O(log n)；
+    def findMedian(self) -> float:
+        total = len(self.left) + len(self.right)
+        if total % 2 == 1:
+            return -self.left[0]
+        else:
+            return (-self.left[0] + self.right[0]) / 2.0
+#仅读取堆顶元素，是(O(1))复杂度
+mf = MedianFinder()
+mf.addNum(1)
+mf.addNum(2)
+print(mf.findMedian())
+mf.addNum(3)
+print(mf.findMedian()) 
